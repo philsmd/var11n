@@ -67,48 +67,69 @@ wait_no_arguments=7 # wait some seconds if no argument was supplied
 usage() {
     echo "Usage:"
     script_name=$(echo "$0"|sed 's!^[\./]*\([^\.]*\).*$!\1!g')
-    echo "    $script_name - configuration script for VONETS(C) VAR11N\n"
-    echo "    $0 [OPTION]...\n"
+    echo "    $script_name - configuration script for VONETS(C) VAR11N"
+    echo
+    echo "    $0 [OPTION]..."
+    echo
     echo "    OPTION:"
     echo "        -u, -user, -username"
-    echo "            user name for web login\n"
+    echo "            user name for web login"
+    echo
     echo "        -nu, -newuser, -newusername"
-    echo "            new user name that should be set for web login\n"
+    echo "            new user name that should be set for web login"
+    echo
     echo "        -p, -pass, -password"
-    echo "            password for web login\n"
+    echo "            password for web login"
+    echo
     echo "        -np, -newpass, -newpassword"
-    echo "            new password that should be set for web login\n"
+    echo "            new password that should be set for web login"
+    echo
     echo "        -i, -iface, -interface"
-    echo "            interface to use for the communication with VAR11N\n"
+    echo "            interface to use for the communication with VAR11N"
+    echo
     echo "        -ip, -ifip, -if_ip, -ifaceip, -iface_ip"
-    echo "            ip address for interface (see -i) to be set\n"
+    echo "            ip address for interface (see -i) to be set"
+    echo
     echo "        -roip, -routerip, -router_ip"
     echo "            ip address of VAR11N, same subnet as interface (see -i and"\
-                   "-ip), to which we connect via HTTP\n"
+                   "-ip), to which we connect via HTTP"
+    echo
     echo "        -e, -essid, -apessid, -ap_essid"
-    echo "            SSID of the main router to which we connect in bridged mode\n"
+    echo "            SSID of the main router to which we connect in bridged mode"
+    echo
     echo "        -re, -ressid, -repeateressid, -repeater_essid"
-    echo "            ESSID to be used for THIS repeater\n"
+    echo "            ESSID to be used for THIS repeater"
+    echo
     echo "        -b, -bssid, -apbssid, -ap_bssid"
-    echo "            BSSID of the main router to which we connect in bridged mode\n"
+    echo "            BSSID of the main router to which we connect in bridged mode"
+    echo
     echo "        -c, -channel, -apchannel, -ap_channel"
-    echo "            channel number of main router/access point (AP)\n"
+    echo "            channel number of main router/access point (AP)"
+    echo
     echo "        -rc, -rechannel, -re_channel, -repeater_channel"
-    echo "            channel number of THIS repeater\n"
+    echo "            channel number of THIS repeater"
+    echo
     echo "        -ap, -passphrase, -ap_pass, -ap_passphrase"
-    echo "            passphrase to authenticate to main router/AP\n"
+    echo "            passphrase to authenticate to main router/AP"
+    echo
     echo "        -rp, -repass, -re_pass, -repeater_pass, -re_passphrase"
-    echo "            passphrase to be set for THIS repeater\n"
+    echo "            passphrase to be set for THIS repeater"
+    echo
     echo "        -psk, -ap_psk, -presharedkey, -preshared_key, -ap_preshared"
-    echo "            preshared key to authenticate to main router (overrides -ap)\n"
+    echo "            preshared key to authenticate to main router (overrides -ap)"
+    echo
     echo "        -repsk, -re_psk, -re_preshared"
-    echo "            preshared key to be set for THIS repeater (overrides -rp)\n"
+    echo "            preshared key to be set for THIS repeater (overrides -rp)"
+    echo
     echo "        -off, -reoff, -re_off, -repeater_off"
-    echo "            disables repeating off signal (repeater off, e.g. only bridge)\n"
+    echo "            disables repeating off signal (repeater off, e.g. only bridge)"
+    echo
     echo "        -hidden, -hidden_ssid, -hidden_essid"
-    echo "            disables the broadcast of the ESSID (AP is \"invisible\")\n"
+    echo "            disables the broadcast of the ESSID (AP is \"invisible\")"
+    echo
     echo "        -h, -help"
-    echo "            this help, USAGE\n"
+    echo "            this help, USAGE"
+    echo
 }
 
 ###############################################################################
@@ -172,7 +193,8 @@ do
             ;;
         *)
             echo "[-] Unknown shell script argument. EXIT"
-            echo -e "\n\n"
+            echo
+            echo
             usage
             exit 0
         esac
