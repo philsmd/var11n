@@ -1,4 +1,39 @@
 #!/bin/sh
+# LICENSE: GPLv2
+# author: philsmd
+# date: jan 2013
+#
+# This shell script is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# var11n is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this source files. If not, see
+# <http://www.gnu.org/licenses/>.
+#
+# NO reverse engineering done or any kind of reverse engineering
+# of the original software intended
+# This script just "replays" the messages that the web interface
+# uses to communicate with the device
+# The capture of the communication can be done via any OPEN SOURCE
+# tool
+# If you use this script/software you can not claim any responsibility
+# for ANY damage, malfunction and other problems to the author
+# USE it at your OWN RISK and use it only iff you really want/need and
+# trust the author
+#
+# use git(hub) to post pull request,to submit patches,to discuss issues
+# PEACE!
+#
+# This software should be run on any *nix system AND
+# if you want to render it cross-plattform, submit patches for other OSes
+
 ###############################################################################
 ############################### CONFIG ########################################
 ###############################################################################
