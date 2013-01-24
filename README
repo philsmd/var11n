@@ -29,6 +29,8 @@ Hardware:
     sudo ./var11n
 * USAGE:
     see ./var11n -h
+    # what command I most of the time use is:
+    # ./var11n -c 6 -rc 6 -b "aa:bb:cc:dd:ee:ff" -e hiddenSSID -ap secret123456 -hidden
       
 # Hacking
 
