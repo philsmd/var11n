@@ -1,0 +1,339 @@
+#!/bin/sh
+###############################################################################
+############################### CONFIG ########################################
+###############################################################################
+user=admin
+user_new=admin
+pass=admin
+pass_new=admin
+iface=eth0
+iface_ip=192.168.1.3
+router_ip=192.168.1.254
+ap_essid="linksys" # example,most used: http://wigle.net/gps/gps/main/ssidstats
+ap_bssid="aa:bb:cc:dd:ee:ff" # CHANGE here or via command line
+ap_channel=6 # 1 to 13
+repeater_channel=$ap_channel
+ap_passphrase="123456789"
+repeater_passphrase="abcdefghijklm"
+repeater_on=1 # is this working (in bridge only mode?)
+repeater_hidden_ssid=0
+
+wait_no_arguments=7 # wait some seconds if no argument was supplied
+
+### NOTE I fixed the WPA2 AES settings (as hard-coded constants) because this
+### setup seems to be the only one mostly secure (today), but you can add some
+### command line arguments (make it variable) for those
+### TODO: make the a/b/g/n wifimode variable, this should be variable of course
+### there is no security problem related to those modes
+
+###############################################################################
+########################## HELPER FUNCTIONS  ##################################
+###############################################################################
+usage() {
+    echo "Usage:"
+    script_name=$(echo "$0"|sed 's!^[\./]*\([^\.]*\).*$!\1!g')
+    echo "    $script_name - configuration script for VONETS(C) VAR11N\n"
+    echo "    $0 [OPTION]...\n"
+    echo "    OPTION:"
+    echo "        -u, -user, -username"
+    echo "            user name for web login\n"
+    echo "        -nu, -newuser, -newusername"
+    echo "            new user name that should be set for web login\n"
+    echo "        -p, -pass, -password"
+    echo "            password for web login\n"
+    echo "        -np, -newpass, -newpassword"
+    echo "            new password that should be set for web login\n"
+    echo "        -i, -iface, -interface"
+    echo "            interface to use for the communication with VAR11N\n"
+    echo "        -ip, -ifip, -if_ip, -ifaceip, -iface_ip"
+    echo "            ip address for interface (see -i) to be set\n"
+    echo "        -roip, -routerip, -router_ip"
+    echo "            ip address of VAR11N, same subnet as interface (see -i and"\
+                   "-ip), to which we connect via HTTP\n"
+    echo "        -e, -essid, -apessid, -ap_essid"
+    echo "            SSID of the main router to which we connect in bridged mode\n"
+    echo "        -re, -ressid, -repeateressid, -repeater_essid"
+    echo "            ESSID to be used for THIS repeater\n"
+    echo "        -b, -bssid, -apbssid, -ap_bssid"
+    echo "            BSSID of the main router to which we connect in bridged mode\n"
+    echo "        -c, -channel, -apchannel, -ap_channel"
+    echo "            channel number of main router/access point (AP)\n"
+    echo "        -rc, -rechannel, -re_channel, -repeater_channel"
+    echo "            channel number of THIS repeater\n"
+    echo "        -ap, -passphrase, -ap_pass, -ap_passphrase"
+    echo "            passphrase to authenticate to main router/AP\n"
+    echo "        -rp, -repass, -re_pass, -repeater_pass, -re_passphrase"
+    echo "            passphrase to be set for THIS repeater\n"
+    echo "        -psk, -ap_psk, -presharedkey, -preshared_key, -ap_preshared"
+    echo "            preshared key to authenticate to main router (overrides -ap)\n"
+    echo "        -repsk, -re_psk, -re_preshared"
+    echo "            preshared key to be set for THIS repeater (overrides -rp)\n"
+    echo "        -off, -reoff, -re_off, -repeater_off"
+    echo "            disables repeating off signal (repeater off, e.g. only bridge)\n"
+    echo "        -hidden, -hidden_ssid, -hidden_essid"
+    echo "            disables the broadcast of the ESSID (AP is \"invisible\")\n"
+    echo "        -h, -help"
+    echo "            this help, USAGE\n"
+}
+
+###############################################################################
+######################### CHECK CLI ARGUMENTS  ################################
+###############################################################################
+valid_arg_counter=0
+arg_val=""
+for i in "$@"
+do
+    if [ -n "$arg_val" ]
+    then
+        # TODO: check all arguments for valid input (e.g. pass length, psk 
+        # format)
+        case "$arg_val" in
+        USERNAME) user="$i";;
+        NEWUSERNAME) user_new="$i";;
+        PASSWORD) pass="$i";;
+        NEWPASSWORD) pass_new="$i";;
+        IFACE) iface="$i";;
+        IFIP) iface_ip="$i";;
+        ROIP) router_ip="$i";;
+        APESSID) ap_essid="$i";;
+        RESSID) repeater_essid="$i";;
+        APBSSID) ap_bssid="$i";;
+        APCHANNEL) ap_channel="$i";;
+        RECHANNEL) repeater_channel="$i";;
+        APPASS) ap_passphrase="$i";;
+        REPASS) repeater_passphrase="$i";;
+        APPSK) ap_psk="$i";;
+        REPSK) repeater_psk="$i";;
+        *) 
+            echo -n "[-] Unknown command line argument.No value can be assigned."
+            echo " EXIT"
+            exit 1
+        esac
+        valid_arg_counter=$(expr $valid_arg_counter + 1)
+        unset arg_val
+    else
+        case "$i" in
+        -u|-user|-username) arg_val=USERNAME;;
+        -nu|-newuser|-newusername) arg_val=NEWUSERNAME;;
+        -p|-pass|-password) arg_val=PASSWORD;;
+        -np|-newpass|-newpassword) arg_val=NEWPASSWORD;;
+        -i|-iface|-interface) arg_val=IFACE;;
+        -ip|-ifip|-if_ip|-ifaceip|-iface_ip) arg_val=IFIP;;
+        -roip|-routerip|-router_ip) arg_val=ROIP;;
+        -e|-essid|-apessid|-ap_essid) arg_val=APESSID;;
+        -re|-ressid|-repeateressid|-repeater_essid) arg_val=RESSID;;
+        -b|-bssid|-apbssid|-ap_bssid) arg_val=APBSSID;;
+        -c|-channel|-apchannel|-ap_channel) arg_val=APCHANNEL;;
+        -rc|-rechannel|-re_channel|-repeater_channel) arg_val=RECHANNEL;;
+        -ap|-passphrase|-ap_pass|-ap_passphrase) arg_val=APPASS;;
+        -rp|-repass|-re_pass|-repeater_pass|-re_passphrase) arg_val=REPASS;;
+        -psk|-ap_psk|-presharedkey|-preshared_key|-ap_preshared) arg_val=APPSK;;
+        -repsk|-re_psk|-re_preshared) arg_val=REPSK;;
+        -off|-reoff|-re_off|-repeater_off) repeater_on=0;;
+        -hidden|-hidden_ssid|-hiden_essid) repeater_hidden_ssid=1;;
+        -h|-help)
+            usage
+            exit 1
+            ;;
+        *)
+            echo "[-] Unknown shell script argument. EXIT"
+            echo -e "\n\n"
+            usage
+            exit 0
+        esac
+    fi 
+done
+if [ -n "$arg_val" ]
+then
+    echo -n "[-] Expected a command line value, but nothing was given. "
+    echo "EXIT"
+    exit 1
+fi
+
+if [ "$valid_arg_counter" -lt 1 ]
+then
+    echo -n "[!] No arguments were supplied. Default arguments of the script "
+    echo -n "config section will be set. Starting after $wait_no_arguments "
+    echo "seconds, otherwise KILL ME"
+    sleep $wait_no_arguments
+fi
+###############################################################################
+################################# MAIN ########################################
+###############################################################################
+if [ -z "$repeater_essid" ]
+then
+    repeater_essid=${ap_essid}_B0
+fi
+if [ -z "$ap_psk" ]
+then
+    ap_psk=$(wpa_passphrase $ap_essid $ap_passphrase|sed -e ':a;N;$!ba;s/\n/abc/' \
+        -e 's/.*psk=\([a-fA-F0-9]*\).*$/\1/g')
+fi
+if [ -z "$repeater_psk" ]
+then
+    repeater_psk=$(wpa_passphrase $repeater_essid $repeater_passphrase|sed \
+        -e ':a;N;$!ba;s/\n/abc/' -e 's/.*psk=\([a-fA-F0-9]*\).*$/\1/g')
+fi
+sudo ifconfig $iface $iface_ip up
+
+sleep 2
+wget -O - http://$router_ip/ >/dev/null 2>&1
+wget -O - http://$router_ip/a.html >/dev/null 2>&1 # NEEDED?
+sleep 5
+# LOGIN
+wget --tries 2 --timeout 7 --post-data="\
+username=$user&\
+password=$pass&\
+Login=" \
+--header="Referer: http://$router_ip/a.html" \
+-O - http://$router_ip/goform/login >/dev/null 2>&1
+if [ "$?" -ne 0 ]
+then
+    echo -n "[-] Could not connect to web interface @ $router_ip. If your are "
+    echo -n "logged in with your browser to the web interface try to disconnect "
+    echo "the device, reconnect and execute this script again. EXIT"
+    exit 1
+fi
+
+wget -O - http://$router_ip/home.asp >/dev/null 2>&1  # NEEDED?
+# sleep since device must accept login (create a keeper object?)
+sleep 2
+
+# set device to bridge + repeater mode
+wget --post-data="\
+opMode=0&\
+wanLanChoose=0
+" \
+--header="Referer: http://$router_ip/opmode.asp" \
+-O - http://$router_ip/goform/setOpMode >/dev/null 2>&1
+
+# apcli_wifimode is:
+# Description:	apcli_wifimode:
+# 11b/g         0
+# 11b		    1
+# 11g		    4
+# 11b/g/n       9
+# 11n           6
+# apcli_channel= 1 to 13
+# apcli_mode is:
+# Description:	    apcli_mode:
+# Disable           OPEN
+# SHARED-WEP        SHAREDWEP (additional arguments: apcli_default_key= 1 to 4, apcli_key1type=0
+#                   (HEX) or 1 (ASCII), apcli_key1=,apcli_key2=, apcli_key3=, apcli_key4=)
+# OPEN-WEP          OPENWEP
+# WPA-PSK           WPAPSK
+# WPA2-PSK          WPA2PSK
+# WPAPSK-WPA2PSK    WPAPSKWPA2PSK
+# apcli_enc=NONE (for OPEN), WEP, TKIP/AES/TKIPAES (for WPAs variants)
+# apcli_autolink=0 or 1 (for Automatic connect to memory hotspot)
+# apcli_issyn=0 or 1 (if sync forced)
+# apcli_repeaterssid=name of repeater SSID  (apcli_issyn must be set to 1?)
+wget --post-data="\
+apcli_ssid=$ap_essid&\
+apcli_bssid=$ap_bssid&\
+apcli_channel=$ap_channel&\
+apcli_wifimode=0&\
+apcli_mode=WPA2PSK&\
+apcli_enc=AES&\
+apcli_wpapsk=$ap_psk&\
+apcli_issyn=0&\
+apcli_repeaterssid=$repeater_essid&\
+apcli_autolink=1" \
+--header="Referer: http://$router_ip/wireless/hotspotsWaitingPage.asp" \
+-O - http://$router_ip/goform/wirelessBrdgApcli >/dev/null 2>&1
+
+post_data="\
+wifiEnableButton=$repeater_on&\
+mssid_0=$repeater_essid&\
+mssid_1=&\
+mssid_2=&\
+mssid_3=&\
+mssid_4=&\
+mssid_5=&\
+mssid_6=&\
+mssid_8=&\
+mssid_9=&\
+mssid_10=&\
+mssid_11=&\
+mssid_12=&\
+mssid_13=&\
+mssid_14=&\
+mssid_15=&\
+wirelessmode=0&\
+sz11gChannel=$repeater_channel&\
+bssid_num=1&\
+n_mode=0&\
+n_bandwidth=1&\
+n_gi=1&\
+n_rdg=1&\
+n_extcha=1&\
+n_stbc=1&\
+n_amsdu=0&\
+n_autoba=1&\
+n_badecline=0&\
+n_disallow_tkip=0&\
+n_2040_coexit=0"
+if [ "$repeater_hidden_ssid" -eq 1 ]
+then
+    post_data="$post_data&hssid=0"
+fi
+wget --post-data="$post_data" --header="Referer: http://$router_ip/wireless/basic.asp" \
+-O - http://$router_ip/goform/wirelessBasic >/dev/null 2>&1
+
+wget --post-data="\
+ssidIndex=0&\
+security_mode=WPA2PSK&\
+wep_default_key=1&\
+wep_key_1=&\
+WEP1Select=1&\
+wep_key_2=&\
+wep_key_3=&\
+wep_key_4=&\
+cipher=1&\
+passphrase=$repeater_psk&\
+PreAuthentication=0&\
+RadiusServerIP=&\
+RadiusServerPort=&\
+RadiusServerSecret=&\
+RadiusServerSessionTimeout=0&\
+RadiusServerIdleTimeout=" \
+--header="Referer: http://$router_ip/wireless/security.asp" \
+-O - http://$router_ip/goform/APSecurity >/dev/null 2>&1
+
+# set new password (if changed)
+if [ -n "$pass_new" -a -n "$user_new" -a "$pass_new" != "$pass" -o "$user_new" != "$user" ]
+then
+    wget --post-data="\
+admuser=$user_new&\
+admpass=$pass_new&\
+admwatchdog=1" \
+    --header="Referer: http://$router_ip/adm/sys/login_setting.asp" \
+    -O - http://$router_ip/goform/setSysAdm >/dev/null 2>&1
+fi
+
+# restart to commit changes
+wget --post-data="\
+command=reboot&\
+SystemCommandSubmit=Restart" \
+--header="Referer: http://$router_ip/adm/equipment_restart.asp" \
+-O - http://$router_ip/goform/SystemCommand >/dev/null 2>&1
+
+sudo ifconfig $iface down
+sudo dhclient -r $iface >/dev/null 2>&1
+# wait until device finished reboot
+sleep 10
+# check if now working via dhcp
+sudo killall dhclient >/dev/null 2>&1
+sudo dhclient -d -1 $iface >/dev/null 2>&1
+if [ "$?" -ne 0 ]
+then
+    echo -n "[!] Didn't get a DHCP offer. This could be normal since the device itself needs "
+    echo "to search for the hotspot, connect, bridge connection etc. This could take a while ..."
+    echo -n "You may also try to unplug the device and re-plug it after a few minutes then try "
+    echo "to get an IP address again. It might also help to connect a device to the repeater..."
+    echo -n "If you are sure that everything supplied is (and also all NOT supplied argument are)"
+    echo " correct, test again via: sudo dhclient $iface"
+else
+    echo "[+] SUCCESS: connected. GOT an IP."
+fi
+exit 0
