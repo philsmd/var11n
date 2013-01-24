@@ -359,7 +359,14 @@ sudo dhclient -r $iface >/dev/null 2>&1
 sleep 10
 # check if now working via dhcp
 sudo killall dhclient >/dev/null 2>&1
-sudo dhclient -d -1 $iface >/dev/null 2>&1
+timeout >/dev/null 2>&1
+if [ "$?" -eq 125 ]
+then
+    # timeout is available => use it
+    sudo timeout 35 dhclient -d -1 $iface >/dev/null 2>&1
+else
+    sudo dhclient -d -1 $iface >/dev/null 2>&1
+fi
 if [ "$?" -ne 0 ]
 then
     echo -n "[!] Didn't get a DHCP offer. This could be normal since the device itself needs "
