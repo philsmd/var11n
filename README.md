@@ -57,7 +57,7 @@ The script/software does not intend any kind of reverse engineering or other ill
 or software of the manufacturer VONETS etc.
 The POST request sent by this script can be viewed via e.g. Firefox extensions or via tools like wireshark  
 This software only does SEND the (almost) same packets that anyway are available on the LAN (ethernet)
-cable AND that you can capture (legally) with any OPEN SOURCE and FREE tool intended for this purpose
+cable AND that you can capture (legally) with any OPEN SOURCE and FREE tool intended for this purpose  
 USE IT AT YOUR OWN RISK  
 You can not claim any responsibility for any damage, malfunction, problems to the author. Use this software
 if you trust the author. Trust the author!
